@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 
 from aiobotocore.session import get_session
 from config import SECRET_S3_KEY, PUBLIC_S3_KEY
-from utils import download_audio_url
+import my_utils.utils as utils
 
 
 class S3Client:
@@ -32,7 +32,7 @@ class S3Client:
     async def upload_file(self, url: str):
         file_path = str(uuid.uuid4()).split('-')[0]
 
-        await download_audio_url(url=url, output_path=file_path)
+        await utils.download_audio_url(url=url, output_path=file_path)
         file_path += '.mp3'
         if os.path.exists(file_path):
             async with self.get_client() as client:
