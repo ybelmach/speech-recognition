@@ -15,13 +15,15 @@ async def read_root():
 
 @app.get("/text-by-url")
 async def text_by_url(url: str):
-    text = await start_llm(url)
-    return {'text': text}
+    result = await start_llm(url)
+    text = result[0]
+    file_url = result[1]
+    return {'text': text, 'file_url': file_url}
 
 
-@app.get("/file/download")
+@app.get("/file-download")
 async def download_file():
-    return FileResponse(path='data.txt', filename='data.txt', media_type='multipart/form-data')
+    return FileResponse(path='test.txt', filename='data.txt', media_type='multipart/form-data')
 
 
 @app.post("/file/upload-bytes")

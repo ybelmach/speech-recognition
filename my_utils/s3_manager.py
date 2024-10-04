@@ -29,24 +29,20 @@ class S3Client:
         async with self.session.create_client('s3', **self.config, verify=False) as client:
             yield client
 
-    async def upload_file(self, url: str):
-        file_path = str(uuid.uuid4()).split('-')[0]
-
-        await utils.download_audio_url(url=url, output_path=file_path)
-        file_path += '.mp3'
+    async def upload_file(self, file_path: str):
         if os.path.exists(file_path):
             async with self.get_client() as client:
                 with open(file_path, 'rb') as file:
                     await client.put_object(Bucket=self.bucket_name, Key=file_path, Body=file)
             print(f"[INFO] Successfully uploaded {file_path}")
         else:
-            print(f"[ERROR] File {file_path} wasn't upload")
+            raise Exception(f"[ERROR] File {file_path} wasn't upload")
         if os.path.exists(file_path):
             os.remove(file_path)
         return file_path
 
 
-async def s3_save(url: str):
+async def s3_save(url: str, **kwargs):
     s3_client = S3Client(
         access_key=PUBLIC_S3_KEY,
         secret_key=SECRET_S3_KEY,
@@ -54,9 +50,17 @@ async def s3_save(url: str):
         bucket_name='speech-recognition-videos',
     )
 
-    return await s3_client.upload_file(url=url)
-
-
-if __name__ == '__main__':
-    url = 'https://www.youtube.com/watch?v=LHyDqNEllyM&ab_channel=%D0%98%D0%B3%D0%BE%D1%80%D1%8C%D0%91%D0%B0%D0%B1%D0%BA%D0%BE'
-    asyncio.run(s3_save(url))
+    mode = kwargs.get('mode')
+    if mode:
+        if mode == 'video':
+            file_path = 'v_' + str(uuid.uuid4()).split('-')[0]
+            await utils.download_audio_url(url=url, output_path=file_path)
+            file_path += '.mp3'
+            return await s3_client.upload_file(file_path=file_path)
+        if mode == 'text':
+            return await s3_client.upload_file(file_path=url)
+        if mode == 'audio':
+            file_path = 'a_' + str(uuid.uuid4()).split('-')[0] + '.mp3'
+            return await s3_client.upload_file(file_path=file_path)
+    else:
+        raise ValueError("Unknown mode")

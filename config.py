@@ -11,3 +11,4 @@ DB_PORT = os.getenv("DB_PORT")
 
 PUBLIC_S3_KEY = os.getenv("PUBLIC_S3_KEY")
 SECRET_S3_KEY = os.getenv("SECRET_S3_KEY")
+DOMAIN = os.getenv("DOMAIN")

@@ -1,7 +1,10 @@
 import asyncio
+import uuid
+
 import whisper
 
 from my_utils.s3_manager import s3_save
+from config import DOMAIN
 
 
 async def download_audio_url(url, output_path):
@@ -19,11 +22,22 @@ async def download_audio_url(url, output_path):
 
 
 async def start_llm(video_url: str):
-    file_url = 'https://3ea85f17-b7fc-41a3-9241-61e9dfe83dcd.selstorage.ru/' + await s3_save(url=video_url)
+    file_name = await s3_save(url=video_url, mode='video')
+    file_url = DOMAIN + file_name
     model = whisper.load_model("turbo")
     result = model.transcribe(file_url)
     result_text = result['text']
-    return result_text
+    text_file_url = await create_txt_file(result_text)
+    return result_text, text_file_url
+
+
+async def create_txt_file(text: str):
+    url = 't_' + str(uuid.uuid4()).split('-')[0] + '.txt'
+    with open(url, 'w') as file:
+        file.write(text)
+    file_name = await s3_save(url=url, mode='text')
+    file_url = DOMAIN + file_name
+    return file_url
 
 
 if __name__ == '__main__':
